@@ -8,7 +8,7 @@ const mockError = jest.fn();
 describe('QueueLemur {Add tasks}', () => {
   let queue: QueueLemur<string>;
   const options: QueueOptions<string> = {
-    action: mockAction,
+    callback: mockAction,
     error: mockError,
     memory: new MockMemory<string>()
   };
@@ -22,8 +22,8 @@ describe('QueueLemur {Add tasks}', () => {
   });
 
   test('should add tasks to the queue and process them', async () => {
-    await queue.add('key1', 'task1', 1000);
-    await queue.add('key2', 'task2', 1000);
+    await queue.add('key1', 'task1', { delay: 1000 });
+    await queue.add('key2', 'task2', { delay: 1000 });
     expect(queue.hasTasks()).toBe(true);
 
     // Simulate processing loop (runs tasks until queue is empty).
@@ -36,7 +36,7 @@ describe('QueueLemur {Add tasks}', () => {
   test('should handle errors', async () => {
     mockAction.mockRejectedValueOnce(new Error('Failed to process task'));
 
-    await queue.add('key1', 'task1', 1000);
+    await queue.add('key1', 'task1', { delay: 1000 });
     expect(queue.hasTasks()).toBe(true);
     // Simulate processing loop (runs tasks until queue is empty).
     await new Promise(resolve => setTimeout(resolve, 3000)); // Allow time for tasks to process.

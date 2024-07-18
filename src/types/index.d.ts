@@ -31,10 +31,10 @@ declare interface Memory<T> {
 declare interface Options<Value extends any> {
     /**
      * The action to be executed for each task.
-     * @param {Value} task - The task to be executed.
+     * @param {T} task - The task to be executed.
      * @returns {Promise<void>}
      */
-    action: (task: Task<Value>) => Promise<void>;
+    callback: (task: T) => Promise<void>;
 
     /**
      * The error handler for tasks.
@@ -48,4 +48,23 @@ declare interface Options<Value extends any> {
     memory?: Memory<Value>;
 }
 
-export { Options, Memory }
+declare interface TaskOptions<T> extends Omit<Options<T>, 'memory'> {
+    /**
+     * The action to be executed for each task.
+     * @param {T} task - The task to be executed.
+     * @returns {Promise<void>}
+     */
+    callback?: (task: T) => Promise<void>;
+
+    /**
+     * The error handler for tasks.
+     * @param {any} e - The error encountered during task execution.
+     */
+    error?: (e: any) => void;
+    /**
+     * Delay in milliseconds before adding the task to the queue.
+     */
+    delay: number = 1000
+}
+
+export { Options, TaskOptions, Memory }

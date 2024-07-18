@@ -1,5 +1,5 @@
 import { QueueLemur } from './QueueLemur';
-import { Options } from "./types";
+import { Options, TaskOptions } from "./types";
 /**
  * ConcurrentQueueManager class to manage multiple instances of QueueLemur for concurrent task processing.
  * @template T - The type of tasks managed by the queue.
@@ -30,11 +30,11 @@ export class QueueManager<T> {
      * @param {number} [ms=1000] - Delay in milliseconds before adding the task to the queue.
      * @returns {Promise<void>}
      */
-    public async addTask(key: string, task: T, ms: number = 1000): Promise<void> {
+    public async addTask(key: string, task: T, opts?: TaskOptions<T>): Promise<void> {
         const leastLoadedQueue = this.queues.reduce((prev, curr) =>
             prev.getQueueLength() < curr.getQueueLength() ? prev : curr
         );
-        await leastLoadedQueue.add(key, task, ms);
+        await leastLoadedQueue.add(key, task, opts);
     }
 
     /**

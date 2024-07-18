@@ -1,5 +1,5 @@
 import { QueueLocalMemory } from "./QueueLocalMemory";
-import { Memory, Options } from "./types";
+import { Memory, Options, TaskOptions } from "./types";
 
 // /**
 //  * Task queue with support for delayed execution and persistence.
@@ -201,10 +201,10 @@ export class QueueLemur<T> {
      * Adds a task to the queue with a specified delay.
      * @param {string} key - Unique key for the task.
      * @param {T} task - The task to be added.
-     * @param {number} [ms=1000] - Delay in milliseconds before adding the task to the queue.
+     * @param {TaskOptions<T>} opts - The options for the queue, including action, error handler, and optional memory persistence.
      * @returns {Promise<void>}
      */
-    public async add(key: string, task: T, ms: number = 1000): Promise<void> {
+    public async add(key: string, task: T, opts?: TaskOptions<T>): Promise<void> {
 
         if (this.timers.has(key)) {
             clearTimeout(this.timers.get(key));
@@ -217,9 +217,9 @@ export class QueueLemur<T> {
             this.timers.delete(key);
             if (this.processingCount < this.concurrency) {
                 this.processingCount++;
-                this.run();
+                this.run(opts);
             }
-        }, ms));
+        }, opts?.delay || 1000));
 
         return new Promise((resolve) => setTimeout(resolve, 500));
     }
@@ -227,7 +227,7 @@ export class QueueLemur<T> {
     /**
      * Processes tasks in the queue up to the concurrency limit.
      */
-    private async run(): Promise<void> {
+    private async run(opts?: Omit<TaskOptions<T>, 'delay'>): Promise<void> {
         if (!this.hasItem(this.queue)) {
             this.processingCount--;
             return;
@@ -240,14 +240,19 @@ export class QueueLemur<T> {
         }
 
         try {
+            // Delete the task from queue.
             this.queue = this.queue.filter((i) => this.compare(i, task))
-            await this.opts.action(task);
+            // We return the task through the callback.
+            if (opts && opts.callback) await opts.callback(task);
+            else await this.opts.callback(task);
+            // Delete the task from memory.
             await (this.opts?.memory || this.memory).delete(task);
         } catch (e: any) {
             e.message = `${this.name} - ${e.message}`;
-            this.opts.error(e);
+            if (opts && opts.error) opts.error(e);
+            else this.opts.error(e);
         } finally {
-            this.run();
+            this.run(opts);
         }
     }
 

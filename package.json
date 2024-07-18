@@ -1,6 +1,6 @@
 {
   "name": "queue-lemur",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Queue-Lemur nos permite crear colas de tareas de una forma fácil.",
   "main": "dist/server/index.js",
   "browser": "dist/browser/index.js",
